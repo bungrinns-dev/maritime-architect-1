@@ -55,13 +55,15 @@ export default function ChapterHero() {
         2.2
       );
 
-      gsap.to(scrollIndicatorRef.current?.querySelector('.pulse-line'), {
-        opacity: 0.2,
-        y: 8,
-        repeat: -1,
-        yoyo: true,
-        duration: 2,
-        ease: 'sine.inOut',
+      const pulseLine = scrollIndicatorRef.current?.querySelector('.pulse-line');
+if (pulseLine) {
+  gsap.to(pulseLine, {
+    opacity: 0.2,
+    y: 8,
+    repeat: -1,
+    yoyo: true,
+    duration: 2,
+    ease: 'sine.inOut',
       });
     }, sectionRef);
 
