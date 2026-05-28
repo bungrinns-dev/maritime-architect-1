@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maritime Systems Architect — Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --abyss: #050508;
+            --deep-navy: #0a0e1a;
+            --tactical-graphite: #1a1f2e;
+            --surface: #121826;
+            --electric-cyan: #00d4ff;
+            --radar-green: #00ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(180deg, var(--abyss) 0%, var(--deep-navy) 50%, var(--abyss) 100%);
+            color: #e8ecf1;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Tactical Grid Background */
+        .tactical-grid {
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Typography */
+        .label-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(232, 236, 241, 0.4);
+        }
+
+        .display-hero {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 5.5rem);
+            font-weight: 300;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+
+        .display-section {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.8rem, 4vw, 3.5rem);
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+        }
+
+        .body-large {
+            font-size: clamp(1rem, 1.5vw, 1.25rem);
+            line-height: 1.7;
+            color: rgba(232, 236, 241, 0.65);
+            max-width: 55ch;
+        }
+
+        /* Utilities */
+        .text-gradient-cyan {
+            background: linear-gradient(135deg, var(--electric-cyan), #80e8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glow-cyan {
+            text-shadow: 0 0 40px rgba(0, 212, 255, 0.3), 0 0 80px rgba(0, 212, 255, 0.1);
+        }
+
+        .glow-green {
+            text-shadow: 0 0 40px rgba(0, 255, 136, 0.2), 0 0 80px rgba(0, 255, 136, 0.05);
+        }
+
+        .container-narrow {
+            max-width: 72rem;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Holographic Edge */
+        .holographic-edge {
+            position: relative;
+            border: 1px solid rgba(232, 236, 241, 0.08);
+            background: var(--surface);
+            border-radius: 0.5rem;
+        }
+
+        .holographic-edge::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, transparent 50%, rgba(0, 255, 136, 0.2) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes sonar {
+            0% { transform: scale(0.3); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: var(--abyss);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            transform: scale(1.1);
+            pointer-events: none;
+        }
+
+        .sonar-container {
+            position: relative;
+            width: 128px;
+            height: 128px;
+            margin-bottom: 3rem;
+        }
+
+        .sonar-dot {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sonar-dot-inner {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--electric-cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        .sonar-ring {
+            position: absolute;
+            inset: 0;
+            border: 1px solid var(--electric-cyan);
+            border-radius: 50%;
+            animation: sonar 2s ease-out infinite;
+        }
+
+        .sonar-ring:nth-child(2) { animation-delay: 0.6s; }
+        .sonar-ring:nth-child(3) { animation-delay: 1.2s; }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--electric-cyan), var(--radar-green));
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            z-index: 50;
+            transform-origin: left;
+            transform: scaleX(0);
+        }
+
+        /* Sections */
+        .chapter {
+            position: relative;
+            width: 100%;
+            padding: 8rem 2rem;
+        }
+
+        /* Particle simulation (CSS-only) */
+        .particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            background: var(--electric-cyan);
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            padding: 2rem;
+            transition: all 0.5s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card-glow {
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.1;
+            transition: opacity 0.7s ease;
+        }
+
+        .card:hover .card-glow {
+            opacity: 0.3;
+        }
+
+        /* Philosophy blocks */
+        .philosophy-block {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .chapter-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 6rem;
+            font-weight: 300;
+            opacity: 0.1;
+            line-height: 1;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 5rem 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Link hover effect */
+        .link-hover {
+            position: relative;
+            display: inline-block;
+        }
+
+        .link-hover::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--electric-cyan);
+            transition: width 0.5s ease;
+        }
+
+        .link-hover:hover::after {
+            width: 100%;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--abyss);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--tactical-graphite);
+            border-radius: 3px;
+        }
+
+        ::selection {
+            background: rgba(0, 212, 255, 0.25);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="sonar-container">
+            <div class="sonar-ring"></div>
+            <div class="sonar-ring"></div>
+            <div class="sonar-ring"></div>
+            <div class="sonar-dot">
+                <div class="sonar-dot-inner"></div>
+            </div>
+        </div>
+        <div class="label-mono" style="color: var(--electric-cyan); margin-bottom: 2rem;" id="bootText">
+            INITIALIZING NAVAL SYSTEMS...
+        </div>
+        <div style="width: 256px; height: 1px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden;">
+            <div id="progressBar" style="position: absolute; inset: 0; background: linear-gradient(90deg, var(--electric-cyan), var(--radar-green)); width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+        <div class="label-mono" style="color: rgba(255,255,255,0.3); margin-top: 1rem; font-size: 0.7rem;" id="progressText">0%</div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="scrollProgress"></div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="opacity: 0; transition: opacity 0.5s ease;">
+
+        <!-- HERO SECTION -->
+        <section class="chapter tactical-grid" style="min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between;">
+            <!-- Simulated 3D Particles -->
+            <div class="particles">
+                <div class="particle" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
+                <div class="particle" style="top: 40%; left: 30%; animation-delay: 1s; background: var(--radar-green);"></div>
+                <div class="particle" style="top: 60%; left: 70%; animation-delay: 2s;"></div>
+                <div class="particle" style="top: 80%; left: 50%; animation-delay: 3s; background: var(--radar-green);"></div>
+                <div class="particle" style="top: 30%; left: 80%; animation-delay: 4s;"></div>
+                <div class="particle" style="top: 70%; left: 20%; animation-delay: 5s;"></div>
+            </div>
+
+            <!-- Ambient gradient -->
+            <div style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 212, 255, 0.04) 0%, transparent 70%);"></div>
+
+            <!-- Top Strip -->
+            <div class="container-narrow" style="padding-top: 2rem; display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 10;">
+                <div class="label-mono">
+                    <span style="color: var(--electric-cyan); animation: pulse 2s infinite;">●</span> SYSTEM ONLINE
+                </div>
+                <div class="label-mono" style="text-align: right;">
+                    <div>LAT: 01.35°N</div>
+                    <div>LON: 103.82°E</div>
+                </div>
+            </div>
+
+            <!-- Center Content -->
+            <div class="container-narrow" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 5rem 0; position: relative; z-index: 10;">
+                <div class="label-mono" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="width: 2rem; height: 1px; background: var(--electric-cyan); opacity: 0.4;"></span>
+                    NAVAL ARCHITECT — 14 YEARS
+                </div>
+
+                <h1 class="display-hero" style="margin-bottom: 2rem;">
+                    <span style="display: block; color: white;">Maritime Systems</span>
+                    <span style="display: block;" class="text-gradient-cyan glow-cyan">Architect</span>
+                </h1>
+
+                <p class="body-large" style="max-width: 40rem;">
+                    Exploring the intersection of 
+                    <span style="color: var(--electric-cyan);">operations</span>, 
+                    <span style="color: var(--radar-green);">artificial intelligence</span>, and 
+                    <span style="color: white;">digital infrastructure</span> for the maritime industry.
+                </p>
+
+                <!-- Product Badges -->
+                <div style="margin-top: 3rem; display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <div class="holographic-edge" style="padding: 0.75rem 1.25rem;">
+                        <div class="label-mono" style="color: var(--electric-cyan); margin-bottom: 0.25rem;">PRODUCT</div>
+                        <div style="font-family: 'Space Grotesk', sans-serif; color: white; font-weight: 500;">LAYAR</div>
+                    </div>
+                    <div class="holographic-edge" style="padding: 0.75rem 1.25rem;">
+                        <div class="label-mono" style="color: var(--radar-green); margin-bottom: 0.25rem;">PLATFORM</div>
+                        <div style="font-family: 'Space Grotesk', sans-serif; color: white; font-weight: 500;">MarineOS</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="container-narrow" style="padding-bottom: 3rem; display: flex; align-items: center; gap: 1rem; position: relative; z-index: 10;">
+                <div style="width: 1px; height: 3rem; background: linear-gradient(to bottom, var(--electric-cyan), transparent); opacity: 0.4;"></div>
+                <div class="label-mono">SCROLL TO EXPLORE</div>
+            </div>
+        </section>
+
+        <!-- IDENTITY SECTION -->
+        <section class="chapter" style="padding: 8rem 2rem;">
+            <div class="container-narrow">
+                <div class="label-mono" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="width: 2rem; height: 1px; background: white; opacity: 0.2;"></span>
+                    CHAPTER 01 — IDENTITY
+                </div>
+                <h2 class="display-section" style="color: white; margin-bottom: 4rem; max-width: 50rem;">
+                    Built from the <span class="text-gradient-cyan">keel up</span>
+                </h2>
+
+                <div class="card-grid">
+                    <!-- Card 1 -->
+                    <div class="holographic-edge card" style="position: relative; overflow: hidden;">
+                        <div class="card-glow" style="background: var(--electric-cyan);"></div>
+                        <div style="position: relative; z-index: 10;">
+                            <div class="label-mono" style="color: var(--electric-cyan); margin-bottom: 1.5rem;">FOUNDATION</div>
+                            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: white; margin-bottom: 1rem;">14 Years in Maritime</h3>
+                            <p style="font-size: 0.875rem; line-height: 1.6; color: rgba(255,255,255,0.5);">
+                                Started as a Naval Architect, evolved into a systems thinker. Spent over a decade understanding how ships operate, how crews work, and where technology fails to serve the people who depend on it.
+                            </p>
+                        </div>
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--electric-cyan), transparent); opacity: 0.3;"></div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="holographic-edge card" style="position: relative; overflow: hidden;">
+                        <div class="card-glow" style="background: var(--radar-green);"></div>
+                        <div style="position: relative; z-index: 10;">
+                            <div class="label-mono" style="color: var(--radar-green); margin-bottom: 1.5rem;">PRODUCTS</div>
+                            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: white; margin-bottom: 1rem;">LAYAR & MarineOS</h3>
+                            <p style="font-size: 0.875rem; line-height: 1.6; color: rgba(255,255,255,0.5);">
+                                Built maritime SaaS products from first principles. LAYAR for spatial intelligence. MarineOS for operational command. Not features bolted onto legacy systems — rebuilt from the hull up.
+                            </p>
+                        </div>
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--radar-green), transparent); opacity: 0.3;"></div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="holographic-edge card" style="position: relative; overflow: hidden;">
+                        <div class="card-glow" style="background: white;"></div>
+                        <div style="position: relative; z-index: 10;">
+                            <div class="label-mono" style="color: white; margin-bottom: 1.5rem;">POSITIONING</div>
+                            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: white; margin-bottom: 1rem;">Not a Freelancer</h3>
+                            <p style="font-size: 0.875rem; line-height: 1.6; color: rgba(255,255,255,0.5);">
+                                This is not a portfolio of client work. This is a systems architecture practice. I build infrastructure that maritime operations will run on for the next decade. Strategic, deliberate, infrastructural.
+                            </p>
+                        </div>
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, white, transparent); opacity: 0.3;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PHILOSOPHY SECTION -->
+        <section style="position: relative;">
+            <div class="chapter" style="padding: 8rem 2rem;">
+                <div class="container-narrow">
+                    <div class="label-mono" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="width: 2rem; height: 1px; background: white; opacity: 0.2;"></span>
+                        PHILOSOPHY
+                    </div>
+                    <h2 class="display-section" style="color: white; margin-bottom: 4rem; max-width: 40rem;">
+                        Principles that guide the <span style="color: var(--radar-green);" class="glow-green">architecture</span>
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Philosophy 1 -->
+            <div class="philosophy-block chapter">
+                <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.05; background: radial-gradient(ellipse 60% 50% at 30% 50%, var(--electric-cyan), transparent);"></div>
+                <div class="container-narrow" style="position: relative; z-index: 10;">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: start;">
+                        <div>
+                            <div class="chapter-number" style="color: var(--electric-cyan); margin-bottom: 1rem;">02</div>
+                            <div class="label-mono" style="color: var(--electric-cyan);">OPERATIONS FIRST</div>
+                        </div>
+                        <div>
+                            <h3 class="display-section" style="color: white; margin-bottom: 2rem;">
+                                Technology must serve the deck, not the dashboard.
+                            </h3>
+                            <p class="body-large">
+                                Most maritime software is built for shore-side managers. I build for the crew on the bridge, the superintendent in the engine room, the port captain under pressure. The interface fades. The operation flows.
+                            </p>
+                            <div style="margin-top: 3rem; width: 6rem; height: 1px; background: var(--electric-cyan); opacity: 0.4;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Philosophy 2 -->
+            <div class="philosophy-block chapter">
+                <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.05; background: radial-gradient(ellipse 60% 50% at 30% 50%, var(--radar-green), transparent);"></div>
+                <div class="container-narrow" style="position: relative; z-index: 10;">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: start;">
+                        <div>
+                            <div class="chapter-number" style="color: var(--radar-green); margin-bottom: 1rem;">03</div>
+                            <div class="label-mono" style="color: var(--radar-green);">AI AS INFRASTRUCTURE</div>
+                        </div>
+                        <div>
+                            <h3 class="display-section" style="color: white; margin-bottom: 2rem;">
+                                Artificial intelligence is not a feature. It is a layer.
+                            </h3>
+                            <p class="body-large">
+                                AI in maritime should not be a chatbot or a gimmick. It should be the invisible nervous system of the vessel — predicting, optimizing, alerting — without demanding attention until attention is critical.
+                            </p>
+                            <div style="margin-top: 3rem; width: 6rem; height: 1px; background: var(--radar-green); opacity: 0.4;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Philosophy 3 -->
+            <div class="philosophy-block chapter">
+                <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.05; background: radial-gradient(ellipse 60% 50% at 30% 50%, white, transparent);"></div>
+                <div class="container-narrow" style="position: relative; z-index: 10;">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; align-items: start;">
+                        <div>
+                            <div class="chapter-number" style="color: white; margin-bottom: 1rem;">04</div>
+                            <div class="label-mono" style="color: white;">DIGITAL SOVEREIGNTY</div>
+                        </div>
+                        <div>
+                            <h3 class="display-section" style="color: white; margin-bottom: 2rem;">
+                                Your data belongs to your fleet, not to a platform.
+                            </h3>
+                            <p class="body-large">
+                                Maritime data is strategic infrastructure. I design systems where the operator retains full ownership and control. No vendor lock-in. No black-box algorithms. Transparent, auditable, sovereign.
+                            </p>
+                            <div style="margin-top: 3rem; width: 6rem; height: 1px; background: white; opacity: 0.4;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <div class="container-narrow">
+                <div class="footer-grid">
+                    <div>
+                        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; color: white; margin-bottom: 0.5rem;">
+                            Maritime Systems Architect
+                        </div>
+                        <div class="label-mono" style="margin-bottom: 1.5rem;">
+                            <span style="color: var(--radar-green); animation: pulse 2s infinite;">●</span> ALL SYSTEMS NOMINAL
+                        </div>
+                        <p style="font-size: 0.875rem; color: rgba(255,255,255,0.4); max-width: 24rem; line-height: 1.6;">
+                            Naval Architect with 14 years of maritime industry experience.
+                            Builder of LAYAR and MarineOS. Based in Singapore.
+                        </p>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <div style="display: grid; grid-template-columns: repeat(3, auto); gap: 2rem 3rem; margin-bottom: 3rem;">
+                            <a href="#" class="label-mono link-hover" style="color: rgba(255,255,255,0.4); text-decoration: none;">GITHUB</a>
+                            <a href="#" class="label-mono link-hover" style="color: rgba(255,255,255,0.4); text-decoration: none;">LINKEDIN</a>
+                            <a href="#" class="label-mono link-hover" style="color: rgba(255,255,255,0.4); text-decoration: none;">JOURNAL</a>
+                            <a href="#" class="label-mono link-hover" style="color: rgba(255,255,255,0.4); text-decoration: none;">PRODUCTS</a>
+                            <a href="#" class="label-mono link-hover" style="color: rgba(255,255,255,0.4); text-decoration: none;">CASE STUDIES</a>
+                            <a href="#" class="label-mono link-hover" style="color: rgba(255,255,255,0.4); text-decoration: none;">CONTACT</a>
+                        </div>
+
+                        <div class="label-mono" style="color: rgba(255,255,255,0.2); text-align: right;">
+                            <div>VER: 1.0.0-ALPHA</div>
+                            <div>DEPLOY: VERCEL EDGE</div>
+                            <div>STACK: NEXT.JS 14 / TAILWIND / TYPESCRIPT / THREE.JS</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div class="label-mono" style="color: rgba(255,255,255,0.2);">© 2026 MARITIME SYSTEMS ARCHITECT</div>
+                    <div class="label-mono" style="color: rgba(255,255,255,0.2);">BUILT WITH INTENTION</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Loading Screen Animation
+        const bootSequence = [
+            'INITIALIZING NAVAL SYSTEMS...',
+            'LOADING MARITIME DATABASE...',
+            'CALIBRATING SONAR ARRAYS...',
+            'ESTABLISHING SECURE LINK...',
+            'SYSTEM ONLINE'
+        ];
+
+        let progress = 0;
+        let currentLine = 0;
+        const bootText = document.getElementById('bootText');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const mainContent = document.getElementById('mainContent');
+
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15 + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(progressInterval);
+            }
+            progressBar.style.width = progress + '%';
+            progressText.textContent = Math.min(Math.round(progress), 100) + '%';
+        }, 200);
+
+        const lineInterval = setInterval(() => {
+            if (currentLine < bootSequence.length - 1) {
+                currentLine++;
+                bootText.textContent = bootSequence[currentLine];
+            } else {
+                clearInterval(lineInterval);
+            }
+        }, 600);
+
+        setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+            mainContent.style.opacity = '1';
+        }, 2800);
+
+        // Scroll Progress Bar
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = scrollTop / docHeight;
+            document.getElementById('scrollProgress').style.transform = 'scaleX(' + scrollPercent + ')';
+        });
+    </script>
+</body>
+</html>
